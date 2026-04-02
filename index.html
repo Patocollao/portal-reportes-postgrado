@@ -155,6 +155,16 @@ tbody td { padding: 11px 15px; }
 .cfg-sec { margin-bottom: 22px; }
 .cfg-sec-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); font-weight: 600; margin-bottom: 11px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 
+/* INVOICE */
+.inv-wrap { border: 2px solid var(--accent); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; }
+.inv-top { background: var(--accent); color: white; padding: 16px 22px; display: flex; justify-content: space-between; align-items: flex-start; }
+.inv-title { font-family: 'DM Serif Display', serif; font-size: 17px; }
+.inv-body { padding: 16px 22px; display: grid; grid-template-columns: 1fr auto; gap: 18px; background: white; }
+
+/* SPINNER */
+.spin { width: 17px; height: 17px; border: 2px solid rgba(255,255,255,.3); border-top-color: white; border-radius: 50%; animation: rot .65s linear infinite; display: inline-block; }
+@keyframes rot { to { transform: rotate(360deg); } }
+
 /* EMPTY */
 .empty { text-align: center; padding: 50px 20px; color: var(--text3); }
 .empty-ico { font-size: 44px; margin-bottom: 10px; opacity: .45; }
@@ -176,6 +186,13 @@ tbody td { padding: 11px 15px; }
 .tbtn { padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); transition: all .15s; }
 .tbtn:hover { border-color: var(--accent); color: var(--accent); }
 .tbtn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+@media(max-width:700px){
+  .main { padding: 14px; }
+  .g2, .g4 { grid-template-columns: 1fr; }
+  .header, .tabs { padding-left: 16px; padding-right: 16px; }
+  .tabs { overflow-x: auto; }
+}
 </style>
 </head>
 <body>
@@ -193,12 +210,16 @@ tbody td { padding: 11px 15px; }
       <span id="statusDot" style="width:8px;height:8px;border-radius:50%;background:#aaa;display:inline-block;transition:background .3s"></span>
       <span id="statusText">—</span>
     </div>
+    <div id="lastSyncLabel" style="display:none;font-size:11px;color:rgba(255,255,255,0.55);white-space:nowrap">
+      Dernière sync : <span id="lastSyncTime">—</span>
+    </div>
+    <button class="hbtn hbtn-solid" id="syncBtn" onclick="syncData()" style="display:none;gap:6px">🔄 Synchroniser</button>
     <button class="hbtn" onclick="openConfig()">⚙️ Config</button>
   </div>
 </div>
 
 <div id="setupBanner">
-  ⚠️ <strong>Configuration requise :</strong> Activez le <a onclick="enableDemo()">mode démo</a> pour tester toutes les fonctionnalités maintenant.
+  ⚠️ <strong>Configuration requise :</strong> Avant d'utiliser l'app, <a onclick="openConfig()">configurez votre Google Sheet ici</a> — ou activez le <a onclick="enableDemo()">mode démo</a>.
 </div>
 
 <div class="tabs">
@@ -243,7 +264,13 @@ tbody td { padding: 11px 15px; }
         </div>
         <input type="number" class="fc" id="tarifInput" value="150" min="0" step="5" oninput="updatePreview();unselectTarifBtns()">
       </div>
-      <button class="btn btn-primary btn-full" onclick="saveSession()">💾 Enregistrer la session</button>
+      
+      <div class="fg">
+        <label class="fl">Notes (optionnel)</label>
+        <input type="text" class="fc" id="sNotes" placeholder="Ex: Suivi, Évaluation initiale...">
+      </div>
+      
+      <button class="btn btn-primary btn-full" id="saveSessBtn" onclick="saveSession()">💾 Enregistrer la session</button>
     </div>
 
     <div>
@@ -254,6 +281,16 @@ tbody td { padding: 11px 15px; }
           <div class="preview-row"><span class="lbl">Tarif consultation</span><span id="pTarif" class="c-bold">$140.00</span></div>
           <div class="preview-row"><span class="lbl">Frais clinique (<span id="pPctLbl">30</span>%)</span><span id="pFrais" class="c-red">-$42.00</span></div>
           <div class="preview-row"><span class="lbl">✅ Votre revenu net</span><span id="pTotal" class="c-green">$98.00</span></div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="flex aic jsb mb16">
+          <div class="card-title" style="margin:0">Sessions d'aujourd'hui</div>
+          <span class="badge badge-gold" id="todayCount">0 session(s)</span>
+        </div>
+        <div id="todayList">
+          <div class="empty"><div class="empty-ico">📅</div><div class="txt-sm">Aucune session aujourd'hui</div></div>
         </div>
       </div>
     </div>
@@ -271,6 +308,32 @@ tbody td { padding: 11px 15px; }
         <select class="fc" id="fMois" style="width:140px" onchange="loadFacture()"></select>
         <select class="fc" id="fAnnee" style="width:88px" onchange="loadFacture()"></select>
         <button class="btn btn-primary" onclick="exportFacture()">📥 Exporter Excel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="inv-wrap">
+    <div class="inv-top">
+      <div>
+        <div class="inv-title">FACTURE — SERVICES PROFESSIONNELS EN PSYCHOLOGIE</div>
+        <div style="font-size:13px;opacity:.8;margin-top:4px" id="invNum">Facture # —</div>
+      </div>
+      <div style="text-align:right;font-size:13px">
+        <div id="invDate">Date : —</div>
+        <div id="invPeriode">Période : —</div>
+      </div>
+    </div>
+    <div class="inv-body">
+      <div>
+        <div class="txt-xs txt-muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Professionnel</div>
+        <div id="invPro" class="fw6"></div>
+        <div class="sep" style="margin:10px 0"></div>
+        <div class="txt-xs txt-muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Client (Clinique)</div>
+        <div id="invClient" style="font-size:13.5px;line-height:1.7"></div>
+      </div>
+      <div style="text-align:right">
+        <div class="txt-xs txt-muted mb16">Résumé du mois</div>
+        <div id="invStats" style="font-size:13px;line-height:2.1"></div>
       </div>
     </div>
   </div>
@@ -310,7 +373,7 @@ tbody td { padding: 11px 15px; }
       </div>
       <div class="fg">
         <label class="fl">Description (Optionnel)</label>
-        <input type="text" class="fc" id="dNotes" placeholder="Ex: Renouvellement OPQ 2026">
+        <input type="text" class="fc" id="dNotes" placeholder="Ex: Renouvellement OPQ">
       </div>
       <button class="btn btn-primary btn-full" onclick="saveDepense()">💾 Ajouter la dépense</button>
     </div>
@@ -339,7 +402,7 @@ tbody td { padding: 11px 15px; }
   <div class="card">
     <div class="tw">
       <table>
-        <thead><tr><th>Prénom</th><th>Nom</th><th>Téléphone</th><th>Statut</th></tr></thead>
+        <thead><tr><th>Prénom</th><th>Nom</th><th>Téléphone</th><th>Naissance</th><th>Date d'appel</th><th>Statut</th><th>Sessions</th></tr></thead>
         <tbody id="clientTbody"></tbody>
       </table>
     </div>
@@ -363,23 +426,67 @@ tbody td { padding: 11px 15px; }
   </div>
 
   <div class="alert alert-info">
-    💡 <strong>Note Fiscale:</strong> Les impôts sont calculés sur votre <strong>Revenu Imposable</strong> (Revenu Net Clinique - Dépenses Pro). Ajouter des dépenses réduit directement le montant d'impôts à payer à la fin de l'année.
+    💡 <strong>Note Fiscale:</strong> Les impôts sont calculés sur votre <strong>Revenu Imposable</strong> (Revenu Net Clinique - Dépenses Pro). Ajouter des dépenses réduit directement le montant d'impôts à payer.
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Clients les plus fréquents</div>
+      <div class="card-sub">Ce mois</div>
+      <div id="topClients"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Répartition par tarif</div>
+      <div class="card-sub">Sessions par niveau de tarif</div>
+      <div id="tarifBreak"></div>
+    </div>
   </div>
 </div>
 
 </div><div class="mbg" id="cfgModal">
 <div class="modal">
   <div class="modal-title">⚙️ Configuration</div>
+
+  <div class="alert alert-info">ℹ️ Ces paramètres sont sauvegardés localement dans votre navigateur.</div>
+
   <div class="cfg-sec">
     <div class="cfg-sec-title">👩‍⚕️ Professionnel</div>
     <div class="fg"><label class="fl">Nom complet</label><input class="fc" id="cNomPro" placeholder="Briseida Quintana-Camacho"></div>
+    <div class="fg"><label class="fl">Titre / qualification</label><input class="fc" id="cTitrePro" placeholder="Psychologue, OPQ #15845-26"></div>
   </div>
+
+  <div class="cfg-sec">
+    <div class="cfg-sec-title">🏥 Clinique (destinataire de la facture)</div>
+    <div class="fg"><label class="fl">Nom de la clinique</label><input class="fc" id="cNomClinique" placeholder="Clinique Réseau 360"></div>
+    <div class="fg"><label class="fl">Adresse</label><input class="fc" id="cAdresse" placeholder="2480 Ch Ste-Foy #200, Québec City, QC"></div>
+    <div class="fg"><label class="fl">Téléphone</label><input class="fc" id="cTel" placeholder="(418) 952-1723"></div>
+  </div>
+
   <div class="cfg-sec">
     <div class="cfg-sec-title">💲 Facturation</div>
-    <div class="fg"><label class="fl">% frais clinique</label><input class="fc" id="cPct" type="number" value="30"></div>
+    <div class="fg"><label class="fl">% frais clinique</label><input class="fc" id="cPct" type="number" value="30" min="0" max="100"></div>
   </div>
+
+  <div class="cfg-sec">
+    <div class="cfg-sec-title">🔗 Google Sheets (base de données)</div>
+    <div class="alert alert-warning">⚠️ Collez l'URL de votre Google Apps Script ci-dessous.</div>
+    <div class="fg">
+      <label class="fl">URL du Web App (Apps Script)</label>
+      <input class="fc" id="cScriptUrl" placeholder="https://script.google.com/macros/s/XXXX/exec">
+    </div>
+    <button class="btn btn-outline btn-full" style="margin-top:4px" onclick="testGoogleScript()">🔌 Tester la connexion Google</button>
+  </div>
+
+  <div class="cfg-sec">
+    <div class="cfg-sec-title">💡 Mode démo (sans Google Sheets)</div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px">
+      <input type="checkbox" id="cDemo" style="width:16px;height:16px">
+      Utiliser les données de démonstration
+    </label>
+  </div>
+
   <div class="modal-footer">
-    <button class="btn btn-secondary" onclick="closeModal('cfgModal')">Fermer</button>
+    <button class="btn btn-secondary" onclick="closeModal('cfgModal')">Annuler</button>
     <button class="btn btn-primary" onclick="saveConfig()">💾 Sauvegarder</button>
   </div>
 </div>
@@ -393,8 +500,18 @@ tbody td { padding: 11px 15px; }
     <div class="fg"><label class="fl">Nom *</label><input class="fc" id="ncNom"></div>
   </div>
   <div class="g2">
-    <div class="fg"><label class="fl">Téléphone</label><input class="fc" id="ncTel"></div>
-    <div class="fg"><label class="fl">Statut</label><select class="fc" id="ncActif"><option value="Oui">Actif</option><option value="Non">Inactif</option></select></div>
+    <div class="fg"><label class="fl">Téléphone</label><input class="fc" id="ncTel" placeholder="(418) 000-0000"></div>
+    <div class="fg"><label class="fl">Date de naissance</label><input class="fc" id="ncDdn" type="date"></div>
+  </div>
+  <div class="g2">
+    <div class="fg">
+      <label class="fl">Sexe</label>
+      <select class="fc" id="ncSexe"><option value="">— Sélectionner —</option><option>Masculin</option><option>Féminin</option><option>Autre</option></select>
+    </div>
+    <div class="fg">
+      <label class="fl">Statut</label>
+      <select class="fc" id="ncActif"><option value="Oui">Actif</option><option value="Non">Inactif</option></select>
+    </div>
   </div>
   <div class="modal-footer">
     <button class="btn btn-secondary" onclick="closeModal('addClientModal')">Annuler</button>
@@ -403,7 +520,7 @@ tbody td { padding: 11px 15px; }
 </div>
 </div>
 
-<div id="toast" style="position:fixed;bottom:22px;right:22px;background:var(--accent);color:white;padding:11px 18px;border-radius:9px;font-size:14px;font-weight:500;box-shadow:0 4px 22px rgba(0,0,0,.2);transform:translateY(80px);opacity:0;transition:all .3s;z-index:999;"></div>
+<div id="toast"></div>
 
 <script>
 // ════════════════════════════
@@ -412,20 +529,22 @@ tbody td { padding: 11px 15px; }
 let cfg = {};
 let clients = [];
 let sessions = [];
-let depenses = []; // NUEVO ARREGLO PARA GASTOS
+let depenses = []; 
 let isDemo = false;
 
 const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const today = new Date().toISOString().split('T')[0];
 
 const DEMO_CLIENTS = [
-  {id:'1', Prénom:'Mathieu', Nom:'Guitor', Téléphone:'514-686-0198', Actif:'Oui'},
-  {id:'2', Prénom:'Kevin', Nom:'Grenier', Téléphone:'581-995-0099', Actif:'Oui'}
+  {id:'1', Prénom:'Mathieu', Nom:'Guitor', Téléphone:'514-686-0198', Date_Naissance:'1994-09-08', Date_Appel:'2026-03-13', Sexe:'Masculin', Actif:'Oui'},
+  {id:'2', Prénom:'Pascale', Nom:'Roussin', Téléphone:'418-573-7580', Date_Naissance:'1969-12-26', Date_Appel:'2026-03-13', Sexe:'Féminin', Actif:'Oui'}
+];
+const DEMO_SESSIONS = [
+  {id:'s1', Date_Session:today, Client:'Mathieu Guitor', ClientId:'1', Tarif:150, Frais:45, Net:105, Mois:`${MOIS[new Date().getMonth()]} ${new Date().getFullYear()}`, Facture:`${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getFullYear()).slice(-2)}`, Notes:''}
 ];
 const DEMO_DEPENSES = [
   {id:'d1', date:'2026-03-05', category:'Cotisations prof. (OPQ)', amount: 650.00, notes:'Renouvellement annuel'},
-  {id:'d2', date:'2026-04-10', category:'Assurances (Responsabilité)', amount: 150.00, notes:'Prime annuelle'},
-  {id:'d3', date:'2026-04-15', category:'Fournitures de bureau / Tests', amount: 85.50, notes:'Tests psychométriques'}
+  {id:'d2', date:'2026-04-10', category:'Assurances (Responsabilité)', amount: 150.00, notes:'Prime annuelle'}
 ];
 
 // ════════════════════════════
@@ -434,11 +553,28 @@ const DEMO_DEPENSES = [
 window.onload = () => {
   loadCfg();
   fillSelectors();
+  
+  // Cargar gastos desde el almacenamiento local del navegador
+  try {
+    const savedDep = localStorage.getItem('clinique360_depenses');
+    if (savedDep) depenses = JSON.parse(savedDep);
+  } catch(e) {}
+
   document.getElementById('sDate').value = today;
   document.getElementById('dDate').value = today;
   updatePreview();
   setTarif(150);
-  if (cfg.demo) { enableDemo(true); return; }
+
+  if (cfg.demo) { 
+    enableDemo(true); 
+    return; 
+  }
+  if (cfg.scriptUrl) {
+    document.getElementById('setupBanner').style.display = 'none';
+    document.getElementById('syncBtn').style.display = '';
+    syncData();
+    return;
+  }
   setStatus('warn', 'Non configuré', '');
 };
 
@@ -498,7 +634,7 @@ function estimarCotizaciones(ingresoImponible) {
 }
 
 // ════════════════════════════
-//  DÉPENSES (NUEVO)
+//  DÉPENSES (SAUVEGARDE LOCALE)
 // ════════════════════════════
 function saveDepense() {
   const date = v('dDate');
@@ -511,6 +647,9 @@ function saveDepense() {
   const dep = { id: 'd'+Date.now(), date: date, category: cat, amount: amt, notes: notes };
   depenses.push(dep);
   
+  // Guardar en el navegador (localStorage) para no afectar el Google Apps Script
+  localStorage.setItem('clinique360_depenses', JSON.stringify(depenses));
+  
   toast('✅ Dépense enregistrée');
   document.getElementById('dAmount').value = '';
   document.getElementById('dNotes').value = '';
@@ -519,9 +658,7 @@ function saveDepense() {
 
 function renderDepenses() {
   const y = document.getElementById('dAnnee').value;
-  // Filtrar gastos por el año seleccionado
   const expYear = depenses.filter(e => e.date && e.date.startsWith(String(y)));
-  // Ordenar del más reciente al más antiguo
   expYear.sort((a,b) => b.date.localeCompare(a.date));
 
   const el = document.getElementById('depensesList');
@@ -550,52 +687,419 @@ function renderDepenses() {
 
 function deleteDepense(id) {
   depenses = depenses.filter(e => e.id !== id);
+  localStorage.setItem('clinique360_depenses', JSON.stringify(depenses));
   renderDepenses();
   toast('🗑️ Dépense supprimée');
 }
 
 // ════════════════════════════
-//  RÉSUMÉ (MODIFICADO CON GASTOS)
+//  CONFIG & GOOGLE SHEETS
+// ════════════════════════════
+function loadCfg() {
+  try { cfg = JSON.parse(localStorage.getItem('clinique360_cfg')||'{}'); } catch(e){ cfg={}; }
+  if(!cfg.pct) cfg.pct=30;
+  if(!cfg.nomPro) cfg.nomPro='Briseida Quintana-Camacho';
+  if(!cfg.titrePro) cfg.titrePro='Candidate au permis de psychologue par voie d\'équivalences';
+  if(!cfg.nomClinique) cfg.nomClinique='Clinique Réseau 360';
+  if(!cfg.adresse) cfg.adresse='2480 Ch Ste-Foy #200, Québec City, QC G1V 1T6';
+  if(!cfg.tel) cfg.tel='(418) 952-1723';
+}
+
+function openConfig() {
+  loadCfg();
+  document.getElementById('cNomPro').value = cfg.nomPro||'';
+  document.getElementById('cTitrePro').value = cfg.titrePro||'';
+  document.getElementById('cNomClinique').value = cfg.nomClinique||'';
+  document.getElementById('cAdresse').value = cfg.adresse||'';
+  document.getElementById('cTel').value = cfg.tel||'';
+  document.getElementById('cPct').value = cfg.pct||30;
+  document.getElementById('cScriptUrl').value = cfg.scriptUrl||'';
+  document.getElementById('cDemo').checked = !!cfg.demo;
+  document.getElementById('cfgModal').classList.add('open');
+}
+
+function saveConfig() {
+  cfg.nomPro = v('cNomPro');
+  cfg.titrePro = v('cTitrePro');
+  cfg.nomClinique = v('cNomClinique');
+  cfg.adresse = v('cAdresse');
+  cfg.tel = v('cTel');
+  cfg.pct = parseFloat(v('cPct'))||30;
+  cfg.scriptUrl = v('cScriptUrl');
+  cfg.demo = document.getElementById('cDemo').checked;
+  localStorage.setItem('clinique360_cfg', JSON.stringify(cfg));
+  
+  closeModal('cfgModal');
+  updatePctUI();
+  updatePreview();
+  toast('✅ Configuration sauvegardée');
+  
+  if (cfg.demo) { 
+    enableDemo(true); 
+    return; 
+  }
+  if (cfg.scriptUrl) {
+    isDemo = false;
+    document.getElementById('setupBanner').style.display='none';
+    document.getElementById('syncBtn').style.display='';
+    syncData();
+  }
+}
+
+function enableDemo(silent=false) {
+  isDemo = true;
+  cfg.demo = true;
+  clients = JSON.parse(JSON.stringify(DEMO_CLIENTS));
+  sessions = JSON.parse(JSON.stringify(DEMO_SESSIONS));
+  
+  // Solo sobreescribimos gastos en demo si no hay ninguno guardado
+  if(depenses.length === 0) depenses = JSON.parse(JSON.stringify(DEMO_DEPENSES));
+  
+  document.getElementById('setupBanner').style.display='none';
+  renderClientDropdown();
+  renderClientTable();
+  loadTodaySessions();
+  renderDepenses();
+  setStatus('demo', 'Mode démo', clients.length + ' clients');
+  if(!silent) toast('🟡 Mode démo activé');
+}
+
+function updatePctUI() {
+  const p = cfg.pct||30;
+  document.getElementById('pctLabel').textContent = `Frais clinique : ${p}% · Votre part : ${100-p}%`;
+  const el = document.getElementById('pPctLbl');
+  if(el) el.textContent = p;
+}
+
+async function callScript(action, data={}) {
+  if (!cfg.scriptUrl) throw new Error('URL du script non configurée');
+  const url = cfg.scriptUrl + '?action=' + action + '&data=' + encodeURIComponent(JSON.stringify(data));
+  const resp = await fetch(url, { redirect: 'follow' });
+  if (!resp.ok) throw new Error('Erreur réseau: ' + resp.status);
+  const text = await resp.text();
+  try {
+    const json = JSON.parse(text);
+    if (json.error) throw new Error(json.error);
+    return json;
+  } catch(e) {
+    throw new Error('Réponse invalide du script. Vérifiez le lien.');
+  }
+}
+
+async function syncData() {
+  if (isDemo) { setStatus('demo', 'Mode démo', clients.length + ' clients'); return; }
+  if (!cfg.scriptUrl) { setStatus('error', 'Non configuré', 'Cliquez sur Config'); return; }
+  
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Sync…';
+  setStatus('syncing', 'Connexion…', '');
+
+  try {
+    const c = await callScript('getClients');
+    clients = c.data || [];
+    const s = await callScript('getSessions');
+    sessions = s.data || [];
+    
+    renderClientDropdown();
+    renderClientTable();
+    loadTodaySessions();
+    updateClientCount();
+
+    const now = new Date();
+    const t = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('lastSyncTime').textContent = t;
+    document.getElementById('lastSyncLabel').style.display = '';
+
+    setStatus('ok', 'Connecté', clients.length + ' clients');
+    toast('✅ Synchronisé avec Google Sheets');
+  } catch(e) {
+    setStatus('error', 'Erreur de connexion', e.message.slice(0,40));
+    toast('❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🔄 Synchroniser';
+  }
+}
+
+function setStatus(state, label, sub) {
+  const pill = document.getElementById('statusPill');
+  const dot  = document.getElementById('statusDot');
+  const txt  = document.getElementById('statusText');
+  pill.style.display = 'flex';
+  const states = {
+    ok:      { color: '#52b788', text: '✓ ' + label + (sub ? '  ·  ' + sub : '') },
+    error:   { color: '#e74c3c', text: '✗ ' + label + (sub ? '  —  ' + sub : '') },
+    syncing: { color: '#f39c12', text: '↻ ' + label },
+    demo:    { color: '#f39c12', text: '● Démo  ·  ' + label },
+    warn:    { color: '#f39c12', text: '⚠ ' + label },
+  };
+  const s = states[state] || states.warn;
+  dot.style.background = s.color;
+  txt.textContent = s.text;
+}
+
+async function testGoogleScript() {
+  const url = document.getElementById('cScriptUrl').value.trim();
+  if (!url) { toast('⚠️ Entrez l\'URL d\'abord', 'warning'); return; }
+  try {
+    const resp = await fetch(url + '?action=ping', { redirect: 'follow' });
+    const text = await resp.text();
+    const json = JSON.parse(text);
+    if (json.status === 'ok') toast('✅ Connexion Google réussie!');
+    else throw new Error(JSON.stringify(json));
+  } catch(e) {
+    toast('❌ Échec: ' + e.message, 'error');
+  }
+}
+
+// ════════════════════════════
+//  SESSIONS & CLIENTS
+// ════════════════════════════
+function setTarif(val) {
+  ['t120','t140','t150','tOther'].forEach(id => { var el=document.getElementById(id); if(el) el.classList.remove('active'); });
+  if(val===120) document.getElementById('t120').classList.add('active');
+  else if(val===140) document.getElementById('t140').classList.add('active');
+  else if(val===150) document.getElementById('t150').classList.add('active');
+  else document.getElementById('tOther').classList.add('active');
+  document.getElementById('tarifInput').value = val > 0 ? val : '';
+  updatePreview();
+}
+
+function unselectTarifBtns() {
+  ['t120','t140','t150','tOther'].forEach(id => { var el=document.getElementById(id); if(el) el.classList.remove('active'); });
+}
+
+function updatePreview() {
+  const t = parseFloat(document.getElementById('tarifInput').value)||0;
+  const p = cfg.pct||30;
+  if(t<=0){
+    document.getElementById('pTarif').textContent='—';
+    document.getElementById('pFrais').textContent='—';
+    document.getElementById('pTotal').textContent='—';
+    return;
+  }
+  const frais = round2(t*p/100);
+  const net = round2(t-frais);
+  document.getElementById('pTarif').textContent=`$${t.toFixed(2)}`;
+  document.getElementById('pFrais').textContent=`-$${frais.toFixed(2)}`;
+  document.getElementById('pTotal').textContent=`$${net.toFixed(2)}`;
+}
+
+function filterClients() {
+  const q = document.getElementById('clientSearch').value.toLowerCase();
+  const sel = document.getElementById('clientSelect');
+  const active = clients.filter(c=>c.Actif!=='Non');
+  const filtered = active.filter(c=>`${c.Prénom} ${c.Nom}`.toLowerCase().includes(q)).sort((a,b)=>`${a.Nom}${a.Prénom}`.localeCompare(`${b.Nom}${b.Prénom}`));
+  sel.innerHTML = filtered.map(c=>`<option value="${c.id}">${c.Prénom} ${c.Nom}</option>`).join('');
+}
+function renderClientDropdown() { filterClients(); }
+function onClientSelect() {
+  const id = document.getElementById('clientSelect').value;
+  const c = clients.find(x=>String(x.id)===String(id));
+  document.getElementById('clientInfo').innerHTML = c ? `📞 ${c.Téléphone||'—'} &nbsp;|&nbsp; 📅 Né(e) : ${c.Date_Naissance||'—'}` : '';
+}
+
+async function saveSession() {
+  const date = document.getElementById('sDate').value;
+  const clientId = document.getElementById('clientSelect').value;
+  const tarif = parseFloat(document.getElementById('tarifInput').value);
+  const notes = document.getElementById('sNotes').value.trim();
+
+  if (!date||!clientId||!tarif) { toast('⚠️ Complétez les champs obligatoires (*)', 'warning'); return; }
+
+  const client = clients.find(c=>String(c.id)===String(clientId));
+  if (!client) { toast('⚠️ Client introuvable', 'warning'); return; }
+
+  const p = cfg.pct||30;
+  const frais = round2(tarif*p/100);
+  const net = round2(tarif-frais);
+  const parts = date.split('-');
+  const dYear = parseInt(parts[0]);
+  const dMonth = parseInt(parts[1]) - 1; 
+  const mois = `${MOIS[dMonth]} ${dYear}`;
+  const numFact = `${String(dMonth+1).padStart(2,'0')}-${String(dYear).slice(-2)}`;
+
+  const sess = { Date_Session:date, Client:`${client.Prénom} ${client.Nom}`, ClientId:clientId, Tarif:tarif, Frais:frais, Net:net, Mois:mois, Facture:numFact, Notes:notes };
+
+  const btn = document.getElementById('saveSessBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Enregistrement…';
+
+  try {
+    if (isDemo||!cfg.scriptUrl) {
+      sess.id='s'+Date.now();
+      sessions.push(sess);
+      toast('✅ Session enregistrée (démo)');
+    } else {
+      const res = await callScript('addSession', sess);
+      sess.id = res.id;
+      sessions.push(sess);
+      toast('✅ Session enregistrée dans Google Sheets');
+    }
+    document.getElementById('sNotes').value='';
+    loadTodaySessions();
+  } catch(e) {
+    toast('❌ '+e.message,'error');
+  } finally {
+    btn.disabled=false; btn.innerHTML='💾 Enregistrer la session';
+  }
+}
+
+function loadTodaySessions() {
+  const todaySess = sessions.filter(s=>s.Date_Session===today);
+  document.getElementById('todayCount').textContent=`${todaySess.length} session(s)`;
+  const el = document.getElementById('todayList');
+  if (!todaySess.length) {
+    el.innerHTML='<div class="empty"><div class="empty-ico">📅</div><div class="txt-sm">Aucune session aujourd\'hui</div></div>';
+    return;
+  }
+  const totT=todaySess.reduce((a,s)=>a+s.Tarif,0);
+  const totF=todaySess.reduce((a,s)=>a+s.Frais,0);
+  const totN=todaySess.reduce((a,s)=>a+s.Net,0);
+  el.innerHTML=`<div class="tw"><table>
+    <thead><tr><th>Client</th><th>Tarif</th><th>Frais</th><th>Net</th></tr></thead>
+    <tbody>${todaySess.map(s=>`<tr>
+      <td><strong>${s.Client}</strong></td>
+      <td>$${s.Tarif}</td>
+      <td class="c-red">-$${s.Frais}</td>
+      <td class="c-green fw6">$${s.Net}</td>
+    </tr>`).join('')}</tbody>
+    <tfoot><tr>
+      <td class="tfoot">TOTAL</td>
+      <td class="tfoot">$${totT}</td>
+      <td class="tfoot c-red">-$${totF}</td>
+      <td class="tfoot c-green">$${totN}</td>
+    </tr></tfoot>
+  </table></div>`;
+}
+
+function renderClientTable() {
+  const actifs = clients.filter(c=>c.Actif!=='Non');
+  const tbody = document.getElementById('clientTbody');
+  if (!actifs.length) {
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--text3)">Aucun client</td></tr>';
+    return;
+  }
+  tbody.innerHTML=actifs.map(c=>{
+    const sessCount=sessions.filter(s=>String(s.ClientId)===String(c.id)).length;
+    return `<tr>
+      <td><strong>${c.Prénom}</strong></td>
+      <td>${c.Nom}</td>
+      <td>${c.Téléphone||'—'}</td>
+      <td>${c.Date_Naissance||'—'}</td>
+      <td>${c.Date_Appel||'—'}</td>
+      <td><span class="badge ${c.Actif==='Oui'?'badge-green':'badge-gray'}">${c.Actif==='Oui'?'Actif':'Inactif'}</span></td>
+      <td><span class="badge badge-gold">${sessCount}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterClientTable() {
+  const q = document.getElementById('ctSearch').value.toLowerCase();
+  document.querySelectorAll('#clientTbody tr').forEach(r=>{
+    r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
+
+function updateClientCount() {
+  const a=clients.filter(c=>c.Actif!=='Non').length;
+  document.getElementById('clientCountLbl').textContent=`${a} clients actifs · ${clients.length} au total`;
+}
+
+function openAddClient() {
+  ['ncPrénom','ncNom','ncTel','ncDdn'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ncSexe').value='';
+  document.getElementById('ncActif').value='Oui';
+  document.getElementById('addClientModal').classList.add('open');
+}
+
+async function saveNewClient() {
+  const prenom=v('ncPrénom'), nom=v('ncNom');
+  if(!prenom||!nom){toast('⚠️ Prénom et Nom obligatoires','warning');return;}
+  const client={Prénom:prenom,Nom:nom,Téléphone:v('ncTel'),Date_Naissance:v('ncDdn'),Date_Appel:today,Sexe:document.getElementById('ncSexe').value,Actif:document.getElementById('ncActif').value};
+  try {
+    if(isDemo||!cfg.scriptUrl){
+      client.id=String(Date.now()); clients.push(client);
+      toast('✅ Client ajouté (démo)');
+    } else {
+      const res=await callScript('addClient',client);
+      client.id=res.id; clients.push(client);
+      toast('✅ Client ajouté dans Google Sheets');
+    }
+    closeModal('addClientModal');
+    renderClientDropdown();
+    renderClientTable();
+    updateClientCount();
+  } catch(e){toast('❌ '+e.message,'error');}
+}
+
+// ════════════════════════════
+//  RÉSUMÉ & FACTURE
 // ════════════════════════════
 function loadResume() {
-  const m = parseInt(document.getElementById('rMois').value);
-  const y = parseInt(document.getElementById('rAnnee').value);
+  const m=parseInt(document.getElementById('rMois').value);
+  const y=parseInt(document.getElementById('rAnnee').value);
+  const moisStr=`${MOIS[m-1]} ${y}`;
   
-  // Sesiones del año (para ingresos brutos y netos de clínica)
+  const sessMois = sessions.filter(s => s.Mois === moisStr);
   const sessAnnee = sessions.filter(s => s.Mois && s.Mois.includes(String(y)));
+
+  const netMoisClinique = sessMois.reduce((a,s) => a + s.Net, 0);
   const netAnnuelClinique = sessAnnee.reduce((a,s) => a + s.Net, 0);
 
-  // Gastos del año
   const expAnnee = depenses.filter(e => e.date && e.date.startsWith(String(y)));
   const totalDepenses = expAnnee.reduce((a,e) => a + e.amount, 0);
 
-  // FÓRMULA FISCAL REAL: Ingreso Imponible = Ingreso Neto - Gastos Dedusibles
   const revenuImposable = Math.max(0, netAnnuelClinique - totalDepenses);
-
-  // Calcular impuestos sobre el Ingreso Imponible
   const impotEstime = estimarImpuestos(revenuImposable);
   const cotisationsSoc = estimarCotizaciones(revenuImposable);
   const totalTaxes = impotEstime + cotisationsSoc;
 
-  // Dinero real final en el bolsillo
   const revenuReel = netAnnuelClinique - totalDepenses - totalTaxes;
 
   document.getElementById('stNetAnnee').textContent = netAnnuelClinique > 0 ? `$${netAnnuelClinique.toFixed(0)}` : '—';
   document.getElementById('stDepenses').textContent = totalDepenses > 0 ? `-$${totalDepenses.toFixed(0)}` : '—';
   document.getElementById('stTaxes').textContent = totalTaxes > 0 ? `-$${totalTaxes.toFixed(0)}` : '—';
   document.getElementById('stReal').textContent = revenuReel > 0 ? `$${revenuReel.toFixed(0)}` : '—';
+
+  // Top clients
+  const freq={};
+  sessMois.forEach(s=>{freq[s.Client]=(freq[s.Client]||0)+1;});
+  const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('topClients').innerHTML=sorted.length
+    ? sorted.map(([name,count],i)=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div class="flex aic gap8">
+            <span style="width:22px;height:22px;background:var(--accent-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--accent)">${i+1}</span>
+            <span>${name}</span>
+          </div>
+          <span class="badge badge-green">${count} sess.</span>
+        </div>`).join('')
+    : '<div class="empty" style="padding:28px 0"><div class="txt-sm">Aucune donnée ce mois</div></div>';
+
+  // Tarif breakdown
+  const tarifs={};
+  sessMois.forEach(s=>{tarifs[`$${s.Tarif}`]=(tarifs[`$${s.Tarif}`]||0)+1;});
+  const te=Object.entries(tarifs).sort();
+  document.getElementById('tarifBreak').innerHTML=te.length
+    ? te.map(([t,c])=>{
+        const pct2=Math.round(c/sessMois.length*100);
+        return `<div style="margin-bottom:18px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+            <span>Tarif ${t}</span><span><strong>${c}</strong> sess. (${pct2}%)</span>
+          </div>
+          <div class="prog-wrap"><div class="prog-bar" style="width:${pct2}%"></div></div>
+        </div>`;
+      }).join('')
+    : '<div class="empty" style="padding:28px 0"><div class="txt-sm">Aucune donnée ce mois</div></div>';
 }
 
-// ════════════════════════════
-//  FACTURE (AJUSTE NOMBRES & 35%)
-// ════════════════════════════
 function loadFacture() {
   const m = parseInt(document.getElementById('fMois').value);
   const y = parseInt(document.getElementById('fAnnee').value);
   const moisStr = `${MOIS[m-1]} ${y}`;
   const sess = sessions.filter(s => s.Mois === moisStr);
 
-  // Calcular Tasa Efectiva usando Ingreso Imponible
   const sessAnnee = sessions.filter(s => s.Mois && s.Mois.includes(String(y)));
   const netAnnuelClinique = sessAnnee.reduce((a,s) => a + s.Net, 0);
   
@@ -605,23 +1109,36 @@ function loadFacture() {
   const revenuImposable = Math.max(0, netAnnuelClinique - totalDepenses);
   const taxesTotales = estimarImpuestos(revenuImposable) + estimarCotizaciones(revenuImposable);
   
-  // Tasa de ahorro recomendada: no menor al 35%
   let tauxEffectif = netAnnuelClinique > 0 ? (taxesTotales) / netAnnuelClinique : 0.35;
   if (tauxEffectif < 0.35) tauxEffectif = 0.35; 
   const pctDisplay = (tauxEffectif * 100).toFixed(1);
+
+  const numF = `${String(m).padStart(2,'0')}-${String(y).slice(-2)}`;
+  document.getElementById('invNum').textContent=`Facture # ${numF}`;
+  const now=new Date();
+  document.getElementById('invDate').textContent=`Date : ${String(now.getDate()).padStart(2,'0')}-${String(now.getMonth()+1).padStart(2,'0')}-${now.getFullYear()}`;
+  document.getElementById('invPeriode').textContent=`Période : ${MOIS[m-1]}`;
+  document.getElementById('invPro').innerHTML=`${cfg.nomPro||'—'}<br><span style="font-weight:400;font-size:13px;color:var(--text3)">${cfg.titrePro||''}</span>`;
+  document.getElementById('invClient').innerHTML=`<strong>${cfg.nomClinique||'—'}</strong><br>${cfg.adresse||''}<br>${cfg.tel||''}`;
 
   const totT = sess.reduce((a,s)=>a+s.Tarif,0);
   const totF = sess.reduce((a,s)=>a+s.Frais,0);
   const totN = sess.reduce((a,s)=>a+s.Net,0);
   const totAerver = totN * tauxEffectif;
 
+  document.getElementById('invStats').innerHTML=`
+    <div>${sess.length} session(s)</div>
+    <div>Total brut : <strong>$${totT.toFixed(2)}</strong></div>
+    <div style="color:var(--accent);font-weight:700;margin-top:4px">Net à recevoir : $${totN.toFixed(2)}</div>
+    <div style="color:var(--warning);font-size:11.5px;margin-top:4px">🏦 À mettre de côté (Impôts/RRQ) : <strong>$${totAerver.toFixed(2)}</strong></div>`;
+
   if (!sess.length) {
-    document.getElementById('factureContent').innerHTML=`<div class="empty"><div class="empty-ico">📂</div><div class="empty-title">Aucune session</div></div>`;
+    document.getElementById('factureContent').innerHTML=`<div class="empty"><div class="empty-ico">📂</div><div class="empty-title">Aucune session pour ${moisStr}</div></div>`;
     return;
   }
 
   document.getElementById('factureContent').innerHTML=`<div class="tw"><table>
-    <thead><tr><th>Date</th><th>Client (Loi 25)</th><th>Tarif</th><th>Frais (30%)</th><th>Net</th><th>🏦 À garder (≈${pctDisplay}%)</th></tr></thead>
+    <thead><tr><th>Date</th><th>Client (Loi 25)</th><th>Tarif</th><th>Frais (${cfg.pct||30}%)</th><th>Net</th><th>🏦 À garder (≈${pctDisplay}%)</th></tr></thead>
     <tbody>${sess.map(s=>`<tr>
       <td>${fmtDate(s.Date_Session)}</td>
       <td><strong>${getConfidentialName(s.ClientId, s.Client)}</strong></td>
@@ -640,6 +1157,111 @@ function loadFacture() {
   </table></div>`;
 }
 
+function exportFacture() {
+  const m = parseInt(document.getElementById('fMois').value);
+  const y = parseInt(document.getElementById('fAnnee').value);
+  const moisStr = `${MOIS[m-1]} ${y}`;
+  const numF = `${String(m).padStart(2,'0')}-${String(y).slice(-2)}`;
+  const sess = sessions.filter(s=>s.Mois===moisStr);
+  if (!sess.length) { toast('⚠️ Aucune session','warning'); return; }
+
+  const now = new Date();
+  const dateStr = `${String(now.getDate()).padStart(2,'0')}-${String(now.getMonth()+1).padStart(2,'0')}-${now.getFullYear()}`;
+  const totT = sess.reduce((a,s)=>a+Number(s.Tarif),0);
+  const totF = sess.reduce((a,s)=>a+Number(s.Frais),0);
+  const totN = sess.reduce((a,s)=>a+Number(s.Net),0);
+  const pct  = cfg.pct || 30;
+
+  const sessionRows = sess.map((s,i) => {
+    const bg = i%2===0 ? '#ffffff' : '#fafafa';
+    return `<tr style="background:${bg}">
+      <td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:11pt;color:#333">${fmtDate(s.Date_Session)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:11pt;color:#333">${getConfidentialName(s.ClientId, s.Client)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:11pt;text-align:right;color:#333">$${Number(s.Tarif).toFixed(2)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:11pt;text-align:right;color:#c0392b">$${Number(s.Frais).toFixed(2)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:11pt;text-align:right;font-weight:bold;color:#1a1a1a">$${Number(s.Net).toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8"><style>body{font-family:Calibri,Arial,sans-serif;margin:0}table{border-collapse:collapse;width:100%}td{vertical-align:top}</style></head>
+<body>
+<table style="width:720px;margin:0 auto;font-family:Calibri,Arial,sans-serif">
+  <tr><td colspan="5" style="height:20px"></td></tr>
+  <tr>
+    <td colspan="3" style="padding:0 12px">
+      <div style="font-size:32pt;font-weight:bold;letter-spacing:-1px;color:#111111;line-height:1">FACTURE</div>
+      <div style="font-size:10pt;color:#888888;margin-top:2px;letter-spacing:1px;text-transform:uppercase">Services professionnels en psychologie</div>
+    </td>
+    <td colspan="2" style="padding:0 12px;text-align:right;vertical-align:bottom">
+      <div style="font-size:18pt;font-weight:bold;color:#111111">N° ${numF}</div>
+      <div style="font-size:10pt;color:#888888">Date : ${dateStr}</div>
+    </td>
+  </tr>
+  <tr><td colspan="5" style="padding:10px 12px 0"><div style="border-top:2px solid #111111;width:100%"></div></td></tr>
+  <tr><td colspan="5" style="height:16px"></td></tr>
+  <tr>
+    <td colspan="3" style="padding:0 12px">
+      <div style="font-size:7.5pt;font-weight:bold;color:#999999;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Professionnel</div>
+      <div style="font-size:12pt;font-weight:bold;color:#111111">${cfg.nomPro||''}</div>
+      <div style="font-size:9pt;color:#666666;margin-top:2px">${cfg.titrePro||''}</div>
+    </td>
+    <td colspan="2" style="padding:0 12px;text-align:right">
+      <div style="font-size:7.5pt;font-weight:bold;color:#999999;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Période</div>
+      <div style="font-size:12pt;font-weight:bold;color:#111111">${MOIS[m-1]} ${y}</div>
+    </td>
+  </tr>
+  <tr><td colspan="5" style="height:16px"></td></tr>
+  <tr>
+    <td colspan="5" style="padding:0 12px">
+      <div style="font-size:7.5pt;font-weight:bold;color:#999999;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Destinataire</div>
+      <div style="font-size:12pt;font-weight:bold;color:#111111">${cfg.nomClinique||''}</div>
+      <div style="font-size:9.5pt;color:#555555;margin-top:2px">${cfg.adresse||''}</div>
+      <div style="font-size:9.5pt;color:#555555">${cfg.tel||''}</div>
+    </td>
+  </tr>
+  <tr><td colspan="5" style="height:24px"></td></tr>
+  <tr style="background:#f2f2f2">
+    <td style="padding:9px 12px;font-size:8.5pt;font-weight:bold;color:#444444;border-top:1.5px solid #111;border-bottom:1.5px solid #111">DATE</td>
+    <td style="padding:9px 12px;font-size:8.5pt;font-weight:bold;color:#444444;border-top:1.5px solid #111;border-bottom:1.5px solid #111">CLIENT</td>
+    <td style="padding:9px 12px;font-size:8.5pt;font-weight:bold;color:#444444;text-align:right;border-top:1.5px solid #111;border-bottom:1.5px solid #111">TARIF</td>
+    <td style="padding:9px 12px;font-size:8.5pt;font-weight:bold;color:#444444;text-align:right;border-top:1.5px solid #111;border-bottom:1.5px solid #111">FRAIS (${pct}%)</td>
+    <td style="padding:9px 12px;font-size:8.5pt;font-weight:bold;color:#444444;text-align:right;border-top:1.5px solid #111;border-bottom:1.5px solid #111">NET</td>
+  </tr>
+  ${sessionRows}
+  <tr>
+    <td colspan="2" style="padding:10px 12px;font-size:11pt;font-weight:bold;color:#111111;border-top:2px solid #111111;border-bottom:1px solid #111111">TOTAL — ${sess.length} consultation(s)</td>
+    <td style="padding:10px 12px;font-size:11pt;font-weight:bold;text-align:right;color:#111111;border-top:2px solid #111111;border-bottom:1px solid #111111">$${totT.toFixed(2)}</td>
+    <td style="padding:10px 12px;font-size:11pt;font-weight:bold;text-align:right;color:#c0392b;border-top:2px solid #111111;border-bottom:1px solid #111111">$${totF.toFixed(2)}</td>
+    <td style="padding:10px 12px;font-size:12pt;font-weight:bold;text-align:right;color:#111111;border-top:2px solid #111111;border-bottom:1px solid #111111">$${totN.toFixed(2)}</td>
+  </tr>
+  <tr><td colspan="5" style="height:48px"></td></tr>
+  <tr>
+    <td colspan="2" style="padding:0 12px"></td>
+    <td colspan="3" style="padding:0 12px;text-align:center">
+      <div style="border-top:1px solid #999999;padding-top:6px">
+        <div style="font-size:8.5pt;color:#999999;letter-spacing:0.5px">Signature du professionnel</div>
+        <div style="font-size:9pt;color:#555555;margin-top:4px">${cfg.nomPro||''}</div>
+      </div>
+    </td>
+  </tr>
+  <tr><td colspan="5" style="height:30px"></td></tr>
+</table>
+</body>
+</html>`;
+
+  const blob = new Blob([html], {type:'application/vnd.ms-excel;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `Facture_${numF}_${(cfg.nomClinique||'Clinique').replace(/ /g,'_')}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✅ Facture exportée!');
+}
+
 function getConfidentialName(clientId, fallbackName) {
   const c = clients.find(x => String(x.id) === String(clientId));
   if (c && c.Nom && c.Prénom) return `${c.Nom.charAt(0).toUpperCase()}. ${c.Prénom}`;
@@ -648,91 +1270,8 @@ function getConfidentialName(clientId, fallbackName) {
 }
 
 // ════════════════════════════
-//  CORE UTILS & CONFIG
+//  NAVIGATION & UI
 // ════════════════════════════
-function loadCfg() { try { cfg = JSON.parse(localStorage.getItem('c360_cfg')||'{}'); } catch(e){ cfg={}; } }
-function openConfig() { document.getElementById('cfgModal').classList.add('open'); }
-function saveConfig() { cfg.demo = true; localStorage.setItem('c360_cfg', JSON.stringify(cfg)); closeModal('cfgModal'); enableDemo(true); }
-
-function enableDemo(silent=false) {
-  isDemo = true; cfg.demo = true;
-  clients = JSON.parse(JSON.stringify(DEMO_CLIENTS));
-  depenses = JSON.parse(JSON.stringify(DEMO_DEPENSES)); // Cargar gastos demo
-  document.getElementById('setupBanner').style.display='none';
-  renderClientDropdown(); renderClientTable(); loadTodaySessions(); renderDepenses();
-  if(!silent) toast('🟡 Mode démo activé');
-}
-
-function setTarif(val) {
-  ['t120','t140','t150','tOther'].forEach(id => { var el=document.getElementById(id); if(el) el.classList.remove('active'); });
-  if(val===120) document.getElementById('t120').classList.add('active');
-  else if(val===140) document.getElementById('t140').classList.add('active');
-  else if(val===150) document.getElementById('t150').classList.add('active');
-  else document.getElementById('tOther').classList.add('active');
-  document.getElementById('tarifInput').value = val > 0 ? val : '';
-  updatePreview();
-}
-
-function updatePreview() {
-  const t = parseFloat(document.getElementById('tarifInput').value)||0;
-  const p = 30; // Fijo 30% clinica
-  if(t<=0){ document.getElementById('pTarif').textContent='—'; return; }
-  const frais = round2(t*p/100);
-  const net = round2(t-frais);
-  document.getElementById('pTarif').textContent=`$${t.toFixed(2)}`;
-  document.getElementById('pFrais').textContent=`-$${frais.toFixed(2)}`;
-  document.getElementById('pTotal').textContent=`$${net.toFixed(2)}`;
-}
-
-function filterClients() {
-  const q = document.getElementById('clientSearch').value.toLowerCase();
-  const sel = document.getElementById('clientSelect');
-  const filtered = clients.filter(c=>`${c.Prénom} ${c.Nom}`.toLowerCase().includes(q));
-  sel.innerHTML = filtered.map(c=>`<option value="${c.id}">${c.Prénom} ${c.Nom}</option>`).join('');
-}
-function renderClientDropdown() { filterClients(); }
-function onClientSelect() {
-  const id = document.getElementById('clientSelect').value;
-  const c = clients.find(x=>String(x.id)===String(id));
-  document.getElementById('clientInfo').innerHTML = c ? `📞 ${c.Téléphone||'—'}` : '';
-}
-
-function saveSession() {
-  const date = document.getElementById('sDate').value;
-  const clientId = document.getElementById('clientSelect').value;
-  const tarif = parseFloat(document.getElementById('tarifInput').value);
-
-  if (!date||!clientId||!tarif) { toast('⚠️ Champs requis', 'warning'); return; }
-
-  const client = clients.find(c=>String(c.id)===String(clientId));
-  const frais = round2(tarif*0.30);
-  const net = round2(tarif-frais);
-  const parts = date.split('-');
-  const mois = `${MOIS[parseInt(parts[1])-1]} ${parts[0]}`;
-
-  sessions.push({ id:'s'+Date.now(), Date_Session:date, Client:`${client.Prénom} ${client.Nom}`, ClientId:clientId, Tarif:tarif, Frais:frais, Net:net, Mois:mois });
-  
-  toast('✅ Session enregistrée');
-  loadTodaySessions();
-}
-
-function loadTodaySessions() {
-  const todaySess = sessions.filter(s=>s.Date_Session===today);
-  document.getElementById('todayCount').textContent=`${todaySess.length} session(s)`;
-}
-
-function renderClientTable() {
-  document.getElementById('clientTbody').innerHTML=clients.map(c=>`<tr><td><strong>${c.Prénom}</strong></td><td>${c.Nom}</td><td>${c.Téléphone}</td><td>Actif</td></tr>`).join('');
-}
-
-function openAddClient() { document.getElementById('addClientModal').classList.add('open'); }
-function saveNewClient() {
-  const prenom=v('ncPrénom'), nom=v('ncNom');
-  if(!prenom||!nom){toast('⚠️ Requis','warning');return;}
-  clients.push({id:String(Date.now()), Prénom:prenom, Nom:nom, Téléphone:v('ncTel')});
-  closeModal('addClientModal'); renderClientDropdown(); renderClientTable(); toast('✅ Client ajouté');
-}
-
 function showTab(tab) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -740,12 +1279,31 @@ function showTab(tab) {
   document.getElementById('tab-'+tab).classList.add('active');
   if(tab==='facture') loadFacture();
   if(tab==='depenses') renderDepenses();
+  if(tab==='clients'){renderClientTable();updateClientCount();}
   if(tab==='resume') loadResume();
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function v(id){return document.getElementById(id).value.trim();}
 function round2(n){return Math.round(n*100)/100;}
-function fmtDate(d){ var p = String(d).split('-'); return p.length===3 ? p[2]+'-'+p[1]+'-'+p[0] : d; }
+function fmtDate(d){
+  if(!d) return '—';
+  var s = String(d);
+  if(s.length > 10 && !s.match(/^\d{4}-\d{2}-\d{2}$/)){
+    var iso = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(iso) { s = iso[1]+'-'+iso[2]+'-'+iso[3]; }
+    else {
+      var dt = new Date(d);
+      if(!isNaN(dt)){
+        var y=dt.getFullYear(), mo=String(dt.getMonth()+1).padStart(2,'0'), dy=String(dt.getDate()).padStart(2,'0');
+        s = y+'-'+mo+'-'+dy;
+      }
+    }
+  }
+  var p = s.split('-');
+  return p.length===3 ? p[2]+'-'+p[1]+'-'+p[0] : s;
+}
+
+document.querySelectorAll('.mbg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('open');}));
 
 let toastTimer;
 function toast(msg,type='success'){

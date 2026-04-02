@@ -211,27 +211,14 @@ tbody td { padding: 11px 15px; }
     </div>
   </div>
   <div class="header-actions">
-    <div id="statusPill" style="
-      display:none;
-      align-items:center;
-      gap:7px;
-      background:rgba(255,255,255,0.12);
-      border:1px solid rgba(255,255,255,0.2);
-      border-radius:20px;
-      padding:5px 13px;
-      font-size:12px;
-      color:white;
-      white-space:nowrap;
-    ">
+    <div id="statusPill" style="display:none;align-items:center;gap:7px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:5px 13px;font-size:12px;color:white;white-space:nowrap;">
       <span id="statusDot" style="width:8px;height:8px;border-radius:50%;background:#aaa;display:inline-block;transition:background .3s"></span>
       <span id="statusText">—</span>
     </div>
     <div id="lastSyncLabel" style="display:none;font-size:11px;color:rgba(255,255,255,0.55);white-space:nowrap">
       Dernière sync : <span id="lastSyncTime">—</span>
     </div>
-    <button class="hbtn hbtn-solid" id="syncBtn" onclick="syncData()" style="display:none;gap:6px">
-      🔄 Synchroniser
-    </button>
+    <button class="hbtn hbtn-solid" id="syncBtn" onclick="syncData()" style="display:none;gap:6px">🔄 Synchroniser</button>
     <button class="hbtn" onclick="openConfig()">⚙️ Config</button>
   </div>
 </div>
@@ -288,9 +275,7 @@ tbody td { padding: 11px 15px; }
         <input type="text" class="fc" id="sNotes" placeholder="Ex: Suivi, Évaluation initiale...">
       </div>
 
-      <button class="btn btn-primary btn-full" id="saveSessBtn" onclick="saveSession()">
-        💾 Enregistrer la session
-      </button>
+      <button class="btn btn-primary btn-full" id="saveSessBtn" onclick="saveSession()">💾 Enregistrer la session</button>
     </div>
 
     <div>
@@ -444,7 +429,7 @@ tbody td { padding: 11px 15px; }
   <div class="cfg-sec">
     <div class="cfg-sec-title">🔗 Google Sheets (base de données)</div>
     <div class="alert alert-warning">
-      ⚠️ Vous devez créer un Google Apps Script et coller son URL ci-dessous. <strong>Voir la guide incluse dans le package.</strong>
+      ⚠️ Vous devez créer un Google Apps Script et coller son URL ci-dessous.
     </div>
     <div class="fg">
       <label class="fl">URL du Web App (Apps Script)</label>
@@ -457,7 +442,7 @@ tbody td { padding: 11px 15px; }
     <div class="cfg-sec-title">💡 Mode démo (sans Google Sheets)</div>
     <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px">
       <input type="checkbox" id="cDemo" style="width:16px;height:16px">
-      Utiliser les données de démonstration (aucune configuration requise)
+      Utiliser les données de démonstration
     </label>
   </div>
 
@@ -511,25 +496,11 @@ const MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août'
 
 const DEMO_CLIENTS = [
   {id:'1',Prénom:'Mathieu',Nom:'Guitor',Téléphone:'514-686-0198',Date_Naissance:'1994-09-08',Date_Appel:'2026-03-13',Sexe:'Masculin',Actif:'Oui'},
-  {id:'2',Prénom:'Kevin',Nom:'Grenier',Téléphone:'581-995-0099',Date_Naissance:'1993-07-24',Date_Appel:'2026-03-13',Sexe:'Masculin',Actif:'Oui'},
-  {id:'3',Prénom:'Pascale',Nom:'Roussin',Téléphone:'418-573-7580',Date_Naissance:'1969-12-26',Date_Appel:'2026-03-13',Sexe:'Féminin',Actif:'Oui'},
-  {id:'4',Prénom:'Bobby',Nom:'Nadeau',Téléphone:'(418) 234-6050',Date_Naissance:'1990-03-23',Date_Appel:'2026-03-09',Sexe:'Masculin',Actif:'Oui'},
-  {id:'5',Prénom:'Joshua',Nom:'Daubioul',Téléphone:'(514) 443-2609',Date_Naissance:'2000-09-26',Date_Appel:'2026-03-07',Sexe:'Masculin',Actif:'Oui'},
-  {id:'6',Prénom:'Christine',Nom:'Hamel',Téléphone:'514-794-7888',Date_Naissance:'1957-06-20',Date_Appel:'2026-03-04',Sexe:'Féminin',Actif:'Oui'},
-  {id:'7',Prénom:'Sonia',Nom:'Kammoun',Téléphone:'418-455-5608',Date_Naissance:'1993-09-13',Date_Appel:'2026-02-06',Sexe:'Féminin',Actif:'Oui'},
-  {id:'8',Prénom:'Lucie',Nom:'Nicole',Téléphone:'(581) 578-8340',Date_Naissance:'1956-05-18',Date_Appel:'2026-01-30',Sexe:'Féminin',Actif:'Oui'},
-  {id:'9',Prénom:'David',Nom:'Boivin',Téléphone:'418-803-4861',Date_Naissance:'1989-08-30',Date_Appel:'2026-01-17',Sexe:'Masculin',Actif:'Oui'},
-  {id:'10',Prénom:'André',Nom:'Gosselin',Téléphone:'418-801-9746',Date_Naissance:'1981-02-17',Date_Appel:'2025-12-23',Sexe:'Masculin',Actif:'Oui'},
+  {id:'2',Prénom:'Kevin',Nom:'Grenier',Téléphone:'581-995-0099',Date_Naissance:'1993-07-24',Date_Appel:'2026-03-13',Sexe:'Masculin',Actif:'Oui'}
 ];
 
 const today = new Date().toISOString().split('T')[0];
-const DEMO_SESSIONS = [
-  {id:'s1',Date_Session:today,Client:'Mathieu Guitor',ClientId:'1',Tarif:140,Frais:42,Net:98,Mois:`${MOIS[new Date().getMonth()]} ${new Date().getFullYear()}`,Facture:`${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getFullYear()).slice(-2)}`,Notes:''},
-  {id:'s2',Date_Session:today,Client:'Kevin Grenier',ClientId:'2',Tarif:140,Frais:42,Net:98,Mois:`${MOIS[new Date().getMonth()]} ${new Date().getFullYear()}`,Facture:`${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getFullYear()).slice(-2)}`,Notes:''},
-  {id:'s3',Date_Session:'2026-03-15',Client:'Pascale Roussin',ClientId:'3',Tarif:120,Frais:36,Net:84,Mois:'Mars 2026',Facture:'03-26',Notes:''},
-  {id:'s4',Date_Session:'2026-03-18',Client:'Bobby Nadeau',ClientId:'4',Tarif:140,Frais:42,Net:98,Mois:'Mars 2026',Facture:'03-26',Notes:''},
-  {id:'s5',Date_Session:'2026-03-20',Client:'Christine Hamel',ClientId:'6',Tarif:140,Frais:42,Net:98,Mois:'Mars 2026',Facture:'03-26',Notes:''},
-];
+const DEMO_SESSIONS = [];
 
 // ════════════════════════════
 //  INIT
@@ -548,7 +519,6 @@ window.onload = () => {
     syncData();
     return;
   }
-  // No config yet
   setStatus('warn', 'Non configuré', '');
 };
 
@@ -565,7 +535,6 @@ function fillSelectors() {
 // ════════════════════════════
 //  CALCUL D'IMPÔTS & RRQ/RQAP
 // ════════════════════════════
-// Taux combinés (Fédéral + Québec) après abattement de 16,5%
 const TAX_BRACKETS_2026 = [
   { max: 16452, rate: 0.0000 },
   { max: 18952, rate: 0.1169 },
@@ -582,37 +551,29 @@ const TAX_BRACKETS_2026 = [
 function estimarImpuestos(ingresoAnualNeto) {
   let impuestoTotal = 0;
   let limiteAnterior = 0;
-
   for (let i = 0; i < TAX_BRACKETS_2026.length; i++) {
     let bracket = TAX_BRACKETS_2026[i];
     let anchoBracket = bracket.max - limiteAnterior;
-    
     if (ingresoAnualNeto > limiteAnterior) {
       let cantidadEnBracket = Math.min(ingresoAnualNeto - limiteAnterior, anchoBracket);
       impuestoTotal += cantidadEnBracket * bracket.rate;
-    } else {
-      break; 
-    }
+    } else { break; }
     limiteAnterior = bracket.max;
   }
   return impuestoTotal;
 }
 
 function estimarCotizaciones(ingresoAnualNeto) {
-  let rrq = 0;
-  let rqap = 0;
-
-  // RRQ 2026 
+  let rrq = 0, rqap = 0;
+  // RRQ 2026
   if (ingresoAnualNeto > 3500) {
     let rrqPalier1 = Math.min(ingresoAnualNeto - 3500, 74600 - 3500) * 0.1260;
     let rrqPalier2 = Math.max(0, Math.min(ingresoAnualNeto, 85000) - 74600) * 0.0800;
     rrq = rrqPalier1 + rrqPalier2;
   }
-
   // RQAP 2026
   let revenuRqap = Math.min(ingresoAnualNeto, 103000);
   rqap = revenuRqap * 0.00764;
-
   return rrq + rqap;
 }
 
@@ -659,8 +620,8 @@ function saveConfig() {
   if (cfg.demo) { enableDemo(true); return; }
   if (cfg.scriptUrl) {
     document.getElementById('setupBanner').style.display='none';
-  document.getElementById('syncBtn').style.display='none';
-  setStatus('demo', 'Mode démo', clients.length + ' clients');
+    document.getElementById('syncBtn').style.display='none';
+    setStatus('demo', 'Mode démo', clients.length + ' clients');
     document.getElementById('syncBtn').style.display='';
     syncData();
   }
@@ -699,19 +660,13 @@ async function callScript(action, data={}) {
     if (json.error) throw new Error(json.error);
     return json;
   } catch(e) {
-    throw new Error('Réponse invalide du script. Vérifiez que le script est bien publié en accès "Tout le monde".');
+    throw new Error('Réponse invalide du script.');
   }
 }
 
 async function syncData() {
-  if (isDemo) {
-    setStatus('demo', 'Mode démo', clients.length + ' clients');
-    return;
-  }
-  if (!cfg.scriptUrl) {
-    setStatus('error', 'Non configuré', 'Cliquez sur Config');
-    return;
-  }
+  if (isDemo) { setStatus('demo', 'Mode démo', clients.length + ' clients'); return; }
+  if (!cfg.scriptUrl) { setStatus('error', 'Non configuré', 'Cliquez sur Config'); return; }
   const btn = document.getElementById('syncBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> Sync…';
@@ -722,7 +677,6 @@ async function syncData() {
     clients = c.data || [];
     const s = await callScript('getSessions');
     sessions = s.data || [];
-
     renderClientDropdown();
     renderClientTable();
     loadTodaySessions();
@@ -734,7 +688,7 @@ async function syncData() {
     document.getElementById('lastSyncLabel').style.display = '';
 
     setStatus('ok', 'Connecté', clients.length + ' clients · ' + sessions.length + ' sessions');
-    toast('✅ Synchronisé — ' + clients.length + ' clients, ' + sessions.length + ' sessions');
+    toast('✅ Synchronisé');
   } catch(e) {
     setStatus('error', 'Erreur de connexion', e.message.slice(0,40));
     toast('❌ ' + e.message, 'error');
@@ -749,7 +703,6 @@ function setStatus(state, label, sub) {
   const dot  = document.getElementById('statusDot');
   const txt  = document.getElementById('statusText');
   pill.style.display = 'flex';
-
   const states = {
     ok:      { color: '#52b788', text: '✓ ' + label + (sub ? '  ·  ' + sub : '') },
     error:   { color: '#e74c3c', text: '✗ ' + label + (sub ? '  —  ' + sub : '') },
@@ -772,7 +725,7 @@ async function testGoogleScript() {
     if (json.status === 'ok') toast('✅ Connexion Google réussie!');
     else throw new Error(JSON.stringify(json));
   } catch(e) {
-    toast('❌ Échec: ' + e.message + ' — Vérifiez que le script est publié en accès "Tout le monde".', 'error');
+    toast('❌ Échec: ' + e.message, 'error');
   }
 }
 
@@ -814,8 +767,7 @@ function filterClients() {
   const q = document.getElementById('clientSearch').value.toLowerCase();
   const sel = document.getElementById('clientSelect');
   const active = clients.filter(c=>c.Actif!=='Non');
-  const filtered = active.filter(c=>`${c.Prénom} ${c.Nom}`.toLowerCase().includes(q))
-    .sort((a,b)=>`${a.Nom}${a.Prénom}`.localeCompare(`${b.Nom}${b.Prénom}`));
+  const filtered = active.filter(c=>`${c.Prénom} ${c.Nom}`.toLowerCase().includes(q)).sort((a,b)=>`${a.Nom}${a.Prénom}`.localeCompare(`${b.Nom}${b.Prénom}`));
   sel.innerHTML = filtered.map(c=>`<option value="${c.id}">${c.Prénom} ${c.Nom}</option>`).join('');
 }
 
@@ -824,9 +776,7 @@ function renderClientDropdown() { filterClients(); }
 function onClientSelect() {
   const id = document.getElementById('clientSelect').value;
   const c = clients.find(x=>String(x.id)===String(id));
-  document.getElementById('clientInfo').innerHTML = c
-    ? `📞 ${c.Téléphone||'—'} &nbsp;|&nbsp; 📅 Né(e) : ${c.Date_Naissance||'—'}`
-    : '';
+  document.getElementById('clientInfo').innerHTML = c ? `📞 ${c.Téléphone||'—'} &nbsp;|&nbsp; 📅 Né(e) : ${c.Date_Naissance||'—'}` : '';
 }
 
 async function saveSession() {
@@ -911,13 +861,16 @@ function loadFacture() {
   const moisStr = `${MOIS[m-1]} ${y}`;
   const sess = sessions.filter(s=>s.Mois===moisStr);
 
-  const sessAnnee = sessions.filter(s => s.Date_Session && s.Date_Session.startsWith(String(y)));
+  // FIX: Filtramos por el string del mes para asegurar compatibilidad con Google Sheets
+  const sessAnnee = sessions.filter(s => s.Mois && s.Mois.includes(String(y)));
   const netAnnuel = sessAnnee.reduce((a,s) => a + s.Net, 0);
   
-  const impotEstime = typeof estimarImpuestos === 'function' ? estimarImpuestos(netAnnuel) : 0;
-  const cotisationsSoc = typeof estimarCotizaciones === 'function' ? estimarCotizaciones(netAnnuel) : 0;
+  const impotEstime = estimarImpuestos(netAnnuel);
+  const cotisationsSoc = estimarCotizaciones(netAnnuel);
   
-  const tauxEffectif = netAnnuel > 0 ? (impotEstime + cotisationsSoc) / netAnnuel : 0.25;
+  // Regla de oro del 35%: La provisión calculada nunca debe ser inferior al 35% por seguridad.
+  let tauxEffectif = netAnnuel > 0 ? (impotEstime + cotisationsSoc) / netAnnuel : 0.35;
+  if (tauxEffectif < 0.35) tauxEffectif = 0.35; 
   const pctDisplay = (tauxEffectif * 100).toFixed(1);
 
   const numF = `${String(m).padStart(2,'0')}-${String(y).slice(-2)}`;
@@ -1004,17 +957,10 @@ function exportFacture() {
     </tr>`;
   }).join('');
 
-  const html = `
-<html xmlns:o="urn:schemas-microsoft-com:office:office"
-      xmlns:x="urn:schemas-microsoft-com:office:excel"
-      xmlns="http://www.w3.org/TR/REC-html40">
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
   <meta charset="UTF-8">
-  <style>
-    body { font-family: Calibri, Arial, sans-serif; margin: 0; }
-    table { border-collapse: collapse; width: 100%; }
-    td { vertical-align: top; }
-  </style>
+  <style> body { font-family: Calibri, Arial, sans-serif; margin: 0; } table { border-collapse: collapse; width: 100%; } td { vertical-align: top; } </style>
 </head>
 <body>
 <table style="width:720px;margin:0 auto;font-family:Calibri,Arial,sans-serif">
@@ -1029,9 +975,7 @@ function exportFacture() {
       <div style="font-size:10pt;color:#888888">Date : ${dateStr}</div>
     </td>
   </tr>
-  <tr><td colspan="5" style="padding:10px 12px 0">
-    <div style="border-top:2px solid #111111;width:100%"></div>
-  </td></tr>
+  <tr><td colspan="5" style="padding:10px 12px 0"><div style="border-top:2px solid #111111;width:100%"></div></td></tr>
   <tr><td colspan="5" style="height:16px"></td></tr>
   <tr>
     <td colspan="3" style="padding:0 12px">
@@ -1168,7 +1112,8 @@ function loadResume() {
   const moisStr=`${MOIS[m-1]} ${y}`;
   
   const sessMois = sessions.filter(s => s.Mois === moisStr);
-  const sessAnnee = sessions.filter(s => s.Date_Session && s.Date_Session.startsWith(String(y)));
+  // FIX: Filtramos por el string del mes para asegurar compatibilidad con Google Sheets
+  const sessAnnee = sessions.filter(s => s.Mois && s.Mois.includes(String(y)));
 
   const netMois = sessMois.reduce((a,s) => a + s.Net, 0);
   const netAnnuel = sessAnnee.reduce((a,s) => a + s.Net, 0);

@@ -861,14 +861,12 @@ function loadFacture() {
   const moisStr = `${MOIS[m-1]} ${y}`;
   const sess = sessions.filter(s=>s.Mois===moisStr);
 
-  // FIX: Filtramos por el string del mes para asegurar compatibilidad con Google Sheets
   const sessAnnee = sessions.filter(s => s.Mois && s.Mois.includes(String(y)));
   const netAnnuel = sessAnnee.reduce((a,s) => a + s.Net, 0);
   
   const impotEstime = estimarImpuestos(netAnnuel);
   const cotisationsSoc = estimarCotizaciones(netAnnuel);
   
-  // Regla de oro del 35%: La provisión calculada nunca debe ser inferior al 35% por seguridad.
   let tauxEffectif = netAnnuel > 0 ? (impotEstime + cotisationsSoc) / netAnnuel : 0.35;
   if (tauxEffectif < 0.35) tauxEffectif = 0.35; 
   const pctDisplay = (tauxEffectif * 100).toFixed(1);
@@ -910,7 +908,7 @@ function loadFacture() {
     </thead>
     <tbody>${sess.map(s=>`<tr>
       <td>${fmtDate(s.Date_Session)}</td>
-      <td>${s.Client}</td>
+      <td>${getConfidentialName(s.ClientId, s.Client)}</td>
       <td>$${s.Tarif.toFixed(2)}</td>
       <td class="c-red">-$${s.Frais.toFixed(2)}</td>
       <td class="c-green fw6">$${s.Net.toFixed(2)}</td>
@@ -948,9 +946,10 @@ function exportFacture() {
 
   const sessionRows = sess.map((s,i) => {
     const bg = i%2===0 ? '#ffffff' : '#fafafa';
+    const confName = getConfidentialName(s.ClientId, s.Client);
     return `<tr style="background:${bg}">
       <td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:11pt;color:#333">${fmtDate(s.Date_Session)}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:11pt;color:#333">${s.Client}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:11pt;color:#333">${confName}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:11pt;text-align:right;color:#333">$${Number(s.Tarif).toFixed(2)}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:11pt;text-align:right;color:#c0392b">$${Number(s.Frais).toFixed(2)}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #eeeeee;font-size:11pt;text-align:right;font-weight:bold;color:#1a1a1a">$${Number(s.Net).toFixed(2)}</td>
@@ -1112,7 +1111,6 @@ function loadResume() {
   const moisStr=`${MOIS[m-1]} ${y}`;
   
   const sessMois = sessions.filter(s => s.Mois === moisStr);
-  // FIX: Filtramos por el string del mes para asegurar compatibilidad con Google Sheets
   const sessAnnee = sessions.filter(s => s.Mois && s.Mois.includes(String(y)));
 
   const netMois = sessMois.reduce((a,s) => a + s.Net, 0);
@@ -1163,6 +1161,19 @@ function loadResume() {
 // ════════════════════════════
 //  UTILS
 // ════════════════════════════
+function getConfidentialName(clientId, fallbackName) {
+  const c = clients.find(x => String(x.id) === String(clientId));
+  if (c && c.Nom && c.Prénom) {
+    return `${c.Nom.charAt(0).toUpperCase()}. ${c.Prénom}`;
+  }
+  const parts = fallbackName.split(' ');
+  if (parts.length > 1) {
+    const last = parts.pop();
+    return `${last.charAt(0).toUpperCase()}. ${parts.join(' ')}`;
+  }
+  return fallbackName;
+}
+
 function showTab(tab) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
